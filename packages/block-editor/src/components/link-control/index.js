@@ -1,17 +1,27 @@
 /**
  * External dependencies
  */
-import classnames from 'classnames';
+import clsx from 'clsx';
 
 /**
  * WordPress dependencies
  */
-import { Button, Spinner, Notice, TextControl } from '@wordpress/components';
+import {
+	Button,
+	Spinner,
+	Notice,
+	TextControl,
+	__experimentalHStack as HStack,
+	__experimentalInputControlSuffixWrapper as InputControlSuffixWrapper,
+} from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useRef, useState, useEffect } from '@wordpress/element';
 import { focus } from '@wordpress/dom';
 import { ENTER } from '@wordpress/keycodes';
 import { isShallowEqualObjects } from '@wordpress/is-shallow-equal';
+import { useSelect, useDispatch } from '@wordpress/data';
+import { store as preferencesStore } from '@wordpress/preferences';
+import { keyboardReturn } from '@wordpress/icons';
 
 /**
  * Internal dependencies
@@ -24,6 +34,7 @@ import useCreatePage from './use-create-page';
 import useInternalValue from './use-internal-value';
 import { ViewerFill } from './viewer-slot';
 import { DEFAULT_LINK_SETTINGS } from './constants';
+import deprecated from '@wordpress/deprecated';
 
 /**
  * Default properties associated with a link control value.
@@ -101,6 +112,9 @@ import { DEFAULT_LINK_SETTINGS } from './constants';
 
 const noop = () => {};
 
+const PREFERENCE_SCOPE = 'core/block-editor';
+const PREFERENCE_KEY = 'linkControlSettingsDrawer';
+
 /**
  * Renders a link control. A link control is a controlled input which maintains
  * a value associated with a link (HTML anchor element) and relevant settings
@@ -133,14 +147,47 @@ function LinkControl( {
 		withCreateSuggestion = true;
 	}
 
-	const isMounting = useRef( true );
+	const [ settingsOpen, setSettingsOpen ] = useState( false );
+
+	const { advancedSettingsPreference } = useSelect( ( select ) => {
+		const prefsStore = select( preferencesStore );
+
+		return {
+			advancedSettingsPreference:
+				prefsStore.get( PREFERENCE_SCOPE, PREFERENCE_KEY ) ?? false,
+		};
+	}, [] );
+
+	const { set: setPreference } = useDispatch( preferencesStore );
+
+	/**
+	 * Sets the open/closed state of the Advanced Settings Drawer,
+	 * optionlly persisting the state to the user's preferences.
+	 *
+	 * Note that Block Editor components can be consumed by non-WordPress
+	 * environments which may not have preferences setup.
+	 * Therefore a local state is also  used as a fallback.
+	 *
+	 * @param {boolean} prefVal the open/closed state of the Advanced Settings Drawer.
+	 */
+	const setSettingsOpenWithPreference = ( prefVal ) => {
+		if ( setPreference ) {
+			setPreference( PREFERENCE_SCOPE, PREFERENCE_KEY, prefVal );
+		}
+		setSettingsOpen( prefVal );
+	};
+
+	// Block Editor components can be consumed by non-WordPress environments
+	// which may not have these preferences setup.
+	// Therefore a local state is used as a fallback.
+	const isSettingsOpen = advancedSettingsPreference || settingsOpen;
+
+	const isMountingRef = useRef( true );
 	const wrapperNode = useRef();
 	const textInputRef = useRef();
-	const isEndingEditWithFocus = useRef( false );
+	const isEndingEditWithFocusRef = useRef( false );
 
 	const settingsKeys = settings.map( ( { id } ) => id );
-
-	const [ settingsOpen, setSettingsOpen ] = useState( false );
 
 	const [
 		internalControlValue,
@@ -163,22 +210,18 @@ function LinkControl( {
 		useCreatePage( createSuggestion );
 
 	useEffect( () => {
-		if (
-			forceIsEditingLink !== undefined &&
-			forceIsEditingLink !== isEditingLink
-		) {
-			setIsEditingLink( forceIsEditingLink );
+		if ( forceIsEditingLink === undefined ) {
+			return;
 		}
-		// Todo: bug if the missing dep is introduced. Will need a fix.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+
+		setIsEditingLink( forceIsEditingLink );
 	}, [ forceIsEditingLink ] );
 
 	useEffect( () => {
 		// We don't auto focus into the Link UI on mount
 		// because otherwise using the keyboard to select text
 		// *within* the link format is not possible.
-		if ( isMounting.current ) {
-			isMounting.current = false;
+		if ( isMountingRef.current ) {
 			return;
 		}
 
@@ -193,8 +236,18 @@ function LinkControl( {
 
 		nextFocusTarget.focus();
 
-		isEndingEditWithFocus.current = false;
+		isEndingEditWithFocusRef.current = false;
 	}, [ isEditingLink, isCreatingPage ] );
+
+	// The component mounting reference is maintained separately
+	// to correctly reset values in `StrictMode`.
+	useEffect( () => {
+		isMountingRef.current = false;
+
+		return () => {
+			isMountingRef.current = true;
+		};
+	}, [] );
 
 	const hasLinkValue = value?.url?.trim()?.length > 0;
 
@@ -203,17 +256,16 @@ function LinkControl( {
 	 * the next render, if focus was within the wrapper when editing finished.
 	 */
 	const stopEditing = () => {
-		isEndingEditWithFocus.current = !! wrapperNode.current?.contains(
+		isEndingEditWithFocusRef.current = !! wrapperNode.current?.contains(
 			wrapperNode.current.ownerDocument.activeElement
 		);
 
-		setSettingsOpen( false );
 		setIsEditingLink( false );
 	};
 
 	const handleSelectSuggestion = ( updatedValue ) => {
 		// Suggestions may contains "settings" values (e.g. `opensInNewTab`)
-		// which should not overide any existing settings values set by the
+		// which should not override any existing settings values set by the
 		// user. This filters out any settings values from the suggestion.
 		const nonSettingsChanges = Object.keys( updatedValue ).reduce(
 			( acc, key ) => {
@@ -292,7 +344,6 @@ function LinkControl( {
 	const shownUnlinkControl =
 		onRemove && value && ! isEditingLink && ! isCreatingPage;
 
-	const showSettings = !! settings?.length && isEditingLink && hasLinkValue;
 	const showActions = isEditingLink && hasLinkValue;
 
 	// Only show text control once a URL value has been committed
@@ -302,6 +353,7 @@ function LinkControl( {
 
 	const isEditing = ( isEditingLink || ! value ) && ! isCreatingPage;
 	const isDisabled = ! valueHasChanges || currentInputIsEmpty;
+	const showSettings = !! settings?.length && isEditingLink && hasLinkValue;
 
 	return (
 		<div
@@ -318,9 +370,10 @@ function LinkControl( {
 			{ isEditing && (
 				<>
 					<div
-						className={ classnames( {
+						className={ clsx( {
 							'block-editor-link-control__search-input-wrapper': true,
 							'has-text-control': showTextControl,
+							'has-actions': showActions,
 						} ) }
 					>
 						{ showTextControl && (
@@ -332,7 +385,7 @@ function LinkControl( {
 								value={ internalControlValue?.title }
 								onChange={ setInternalTextInputValue }
 								onKeyDown={ handleSubmitWithEnter }
-								size="__unstable-large"
+								__next40pxDefaultSize
 							/>
 						) }
 						<LinkControlSearchInput
@@ -353,6 +406,22 @@ function LinkControl( {
 								createSuggestionButtonText
 							}
 							hideLabelFromVision={ ! showTextControl }
+							suffix={
+								showActions ? undefined : (
+									<InputControlSuffixWrapper variant="control">
+										<Button
+											onClick={
+												isDisabled ? noop : handleSubmit
+											}
+											label={ __( 'Submit' ) }
+											icon={ keyboardReturn }
+											className="block-editor-link-control__search-submit"
+											aria-disabled={ isDisabled }
+											size="small"
+										/>
+									</InputControlSuffixWrapper>
+								)
+							}
 						/>
 					</div>
 					{ errorMessage && (
@@ -385,8 +454,8 @@ function LinkControl( {
 				<div className="block-editor-link-control__tools">
 					{ ! currentInputIsEmpty && (
 						<LinkControlSettingsDrawer
-							settingsOpen={ settingsOpen }
-							setSettingsOpen={ setSettingsOpen }
+							settingsOpen={ isSettingsOpen }
+							setSettingsOpen={ setSettingsOpenWithPreference }
 						>
 							<LinkSettings
 								value={ internalControlValue }
@@ -401,8 +470,19 @@ function LinkControl( {
 			) }
 
 			{ showActions && (
-				<div className="block-editor-link-control__search-actions">
+				<HStack
+					justify="right"
+					className="block-editor-link-control__search-actions"
+				>
 					<Button
+						__next40pxDefaultSize
+						variant="tertiary"
+						onClick={ handleCancel }
+					>
+						{ __( 'Cancel' ) }
+					</Button>
+					<Button
+						__next40pxDefaultSize
 						variant="primary"
 						onClick={ isDisabled ? noop : handleSubmit }
 						className="block-editor-link-control__search-submit"
@@ -410,17 +490,24 @@ function LinkControl( {
 					>
 						{ __( 'Save' ) }
 					</Button>
-					<Button variant="tertiary" onClick={ handleCancel }>
-						{ __( 'Cancel' ) }
-					</Button>
-				</div>
+				</HStack>
 			) }
 
-			{ renderControlBottom && renderControlBottom() }
+			{ ! isCreatingPage && renderControlBottom && renderControlBottom() }
 		</div>
 	);
 }
 
 LinkControl.ViewerFill = ViewerFill;
+LinkControl.DEFAULT_LINK_SETTINGS = DEFAULT_LINK_SETTINGS;
+
+export const DeprecatedExperimentalLinkControl = ( props ) => {
+	deprecated( 'wp.blockEditor.__experimentalLinkControl', {
+		since: '6.8',
+		alternative: 'wp.blockEditor.LinkControl',
+	} );
+
+	return <LinkControl { ...props } />;
+};
 
 export default LinkControl;
