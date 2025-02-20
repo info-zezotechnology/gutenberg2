@@ -10,6 +10,7 @@ import {
 import { hasFilter, applyFilters } from '@wordpress/hooks';
 import isShallowEqual from '@wordpress/is-shallow-equal';
 import { removep } from '@wordpress/autop';
+import deprecated from '@wordpress/deprecated';
 
 /**
  * Internal dependencies
@@ -128,7 +129,9 @@ export function getSaveElement(
 ) {
 	const blockType = normalizeBlockType( blockTypeOrName );
 
-	if ( ! blockType?.save ) return null;
+	if ( ! blockType?.save ) {
+		return null;
+	}
 
 	let { save } = blockType;
 
@@ -174,9 +177,9 @@ export function getSaveElement(
 	/**
 	 * Filters the save result of a block during serialization.
 	 *
-	 * @param {WPElement} element    Block save result.
-	 * @param {WPBlock}   blockType  Block type definition.
-	 * @param {Object}    attributes Block attributes.
+	 * @param {Element} element    Block save result.
+	 * @param {WPBlock} blockType  Block type definition.
+	 * @param {Object}  attributes Block attributes.
 	 */
 	return applyFilters(
 		'blocks.getSaveElement',
@@ -235,10 +238,26 @@ export function getCommentAttributes( blockType, attributes ) {
 				return accumulator;
 			}
 
+			// Ignore all local attributes
+			if ( attributeSchema.role === 'local' ) {
+				return accumulator;
+			}
+
+			if ( attributeSchema.__experimentalRole === 'local' ) {
+				deprecated( '__experimentalRole attribute', {
+					since: '6.7',
+					version: '6.8',
+					alternative: 'role attribute',
+					hint: `Check the block.json of the ${ blockType?.name } block.`,
+				} );
+				return accumulator;
+			}
+
 			// Ignore default value.
 			if (
 				'default' in attributeSchema &&
-				attributeSchema.default === value
+				JSON.stringify( attributeSchema.default ) ===
+					JSON.stringify( value )
 			) {
 				return accumulator;
 			}

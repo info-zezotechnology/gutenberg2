@@ -26,7 +26,6 @@ import { select, dispatch } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 import { store as coreStore } from '@wordpress/core-data';
 import apiFetch from '@wordpress/api-fetch';
-import '@wordpress/jest-console';
 
 /**
  * Internal dependencies
@@ -49,6 +48,7 @@ function mockGetMedia( media ) {
 const FETCH_MEDIA = {
 	request: {
 		path: `/wp/v2/media/1?context=edit`,
+		parse: false,
 	},
 	response: {
 		source_url: 'https://cldup.com/cXyG__fTLN.jpg',
@@ -62,7 +62,7 @@ Clipboard.getString.mockImplementation( () => clipboardPromise );
 beforeAll( () => {
 	registerCoreBlocks();
 
-	// Mock Image.getSize to avoid failed attempt to size non-existant image
+	// Mock Image.getSize to avoid failed attempt to size non-existent image
 	const getSizeSpy = jest.spyOn( Image, 'getSize' );
 	getSizeSpy.mockImplementation( ( _url, callback ) => callback( 300, 200 ) );
 } );
