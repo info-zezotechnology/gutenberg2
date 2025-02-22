@@ -43,6 +43,7 @@ function AddCustomGenericTemplateModalContent( { onClose, createTemplate } ) {
 		<form onSubmit={ onCreateTemplate }>
 			<VStack spacing={ 6 }>
 				<TextControl
+					__next40pxDefaultSize
 					__nextHasNoMarginBottom
 					label={ __( 'Name' ) }
 					value={ title }
@@ -50,6 +51,7 @@ function AddCustomGenericTemplateModalContent( { onClose, createTemplate } ) {
 					placeholder={ defaultTitle }
 					disabled={ isBusy }
 					help={ __(
+						// eslint-disable-next-line no-restricted-syntax -- 'sidebar' is a common web design term for layouts
 						'Describe the template, e.g. "Post with sidebar". A custom template can be manually applied to any post or page.'
 					) }
 				/>
@@ -58,6 +60,7 @@ function AddCustomGenericTemplateModalContent( { onClose, createTemplate } ) {
 					justify="right"
 				>
 					<Button
+						__next40pxDefaultSize
 						variant="tertiary"
 						onClick={ () => {
 							onClose();
@@ -66,6 +69,7 @@ function AddCustomGenericTemplateModalContent( { onClose, createTemplate } ) {
 						{ __( 'Cancel' ) }
 					</Button>
 					<Button
+						__next40pxDefaultSize
 						variant="primary"
 						type="submit"
 						isBusy={ isBusy }
