@@ -1,9 +1,7 @@
 {
+	"$schema": "https://json.schemastore.org/tsconfig.json",
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"rootDir": "src",
-		"declarationDir": "build-types",
-		"noUnusedParameters": false,
 		"checkJs": false,
 		"noImplicitAny": false
 	},
@@ -18,7 +16,10 @@
 		{ "path": "../i18n" },
 		{ "path": "../is-shallow-equal" },
 		{ "path": "../private-apis" },
-		{ "path": "../url" }
-	],
-	"include": [ "src/**/*" ]
+		{ "path": "../rich-text" },
+		{ "path": "../sync" },
+		{ "path": "../undo-manager" },
+		{ "path": "../url" },
+		{ "path": "../warning" }
+	]
 }
