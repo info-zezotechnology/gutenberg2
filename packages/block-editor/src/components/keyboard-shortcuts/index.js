@@ -15,6 +15,36 @@ function KeyboardShortcutsRegister() {
 	const { registerShortcut } = useDispatch( keyboardShortcutsStore );
 	useEffect( () => {
 		registerShortcut( {
+			name: 'core/block-editor/copy',
+			category: 'block',
+			description: __( 'Copy the selected block(s).' ),
+			keyCombination: {
+				modifier: 'primary',
+				character: 'c',
+			},
+		} );
+
+		registerShortcut( {
+			name: 'core/block-editor/cut',
+			category: 'block',
+			description: __( 'Cut the selected block(s).' ),
+			keyCombination: {
+				modifier: 'primary',
+				character: 'x',
+			},
+		} );
+
+		registerShortcut( {
+			name: 'core/block-editor/paste',
+			category: 'block',
+			description: __( 'Paste the selected block(s).' ),
+			keyCombination: {
+				modifier: 'primary',
+				character: 'v',
+			},
+		} );
+
+		registerShortcut( {
 			name: 'core/block-editor/duplicate',
 			category: 'block',
 			description: __( 'Duplicate the selected block(s).' ),
@@ -29,8 +59,8 @@ function KeyboardShortcutsRegister() {
 			category: 'block',
 			description: __( 'Remove the selected block(s).' ),
 			keyCombination: {
-				modifier: 'access',
-				character: 'z',
+				modifier: 'primaryShift',
+				character: 'backspace',
 			},
 		} );
 
@@ -94,6 +124,16 @@ function KeyboardShortcutsRegister() {
 		} );
 
 		registerShortcut( {
+			name: 'core/block-editor/multi-text-selection',
+			category: 'selection',
+			description: __( 'Select text across multiple blocks.' ),
+			keyCombination: {
+				modifier: 'shift',
+				character: 'arrow',
+			},
+		} );
+
+		registerShortcut( {
 			name: 'core/block-editor/focus-toolbar',
 			category: 'global',
 			description: __( 'Navigate to the nearest toolbar.' ),
@@ -120,6 +160,29 @@ function KeyboardShortcutsRegister() {
 			keyCombination: {
 				modifier: 'secondary',
 				character: 'y',
+			},
+		} );
+
+		// List view shortcuts.
+		registerShortcut( {
+			name: 'core/block-editor/collapse-list-view',
+			category: 'list-view',
+			description: __( 'Collapse all other items.' ),
+			keyCombination: {
+				modifier: 'alt',
+				character: 'l',
+			},
+		} );
+
+		registerShortcut( {
+			name: 'core/block-editor/group',
+			category: 'block',
+			description: __(
+				'Create a group block from the selected multiple blocks.'
+			),
+			keyCombination: {
+				modifier: 'primary',
+				character: 'g',
 			},
 		} );
 	}, [ registerShortcut ] );

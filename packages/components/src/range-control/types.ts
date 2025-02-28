@@ -105,7 +105,7 @@ export type RangeControlProps = Pick<
 		/**
 		 * CSS color string for the `RangeControl` wrapper.
 		 *
-		 * @default COLORS.ui.theme
+		 * @default COLORS.theme.accent
 		 * @see /packages/components/src/utils/colors-values.js
 		 */
 		color?: CSSProperties[ 'color' ];
@@ -233,6 +233,13 @@ export type RangeControlProps = Pick<
 		 * @default true
 		 */
 		withInputField?: boolean;
+		/**
+		 * Do not throw a warning for the deprecated 36px default size.
+		 * For internal components of other components that already throw the warning.
+		 *
+		 * @ignore
+		 */
+		__shouldNotWarnDeprecated36pxSize?: boolean;
 	};
 
 export type RailProps = MarksProps & {

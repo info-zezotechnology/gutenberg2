@@ -240,12 +240,13 @@
 
 div[data-type="core/freeform"] {
 	&::before {
-		transition: border-color 0.1s linear, box-shadow 0.1s linear;
-		@include reduce-motion("transition");
 		border: $border-width solid $gray-300;
-
 		// Windows High Contrast mode will show this outline.
 		outline: $border-width solid transparent;
+
+		@media not (prefers-reduced-motion) {
+			transition: border-color 0.1s linear, box-shadow 0.1s linear;
+		}
 	}
 
 	&.is-selected::before {
@@ -299,7 +300,7 @@ div[data-type="core/freeform"] {
 	top: 0;
 	border: $border-width solid $gray-300;
 	border-bottom: none;
-	border-radius: $radius-block-ui;
+	border-radius: $radius-small;
 	margin-bottom: $grid-unit-10;
 
 	// On mobile, toolbars go edge to edge.
@@ -376,14 +377,20 @@ div[data-type="core/freeform"] {
 }
 
 .block-editor-freeform-modal {
-	.components-modal__frame {
+	.block-editor-freeform-modal__content {
+		.mce-edit-area iframe {
+			height: 50vh !important;
+		}
 		// On large screens, make the TinyMCE edit area grow to take all the
 		// available height so that the Cancel/Save buttons are always into the
 		// view. On smaller screens, the modal content is scrollable.
 		@include break-large() {
+
 			// On medium and large screens, the modal component sets a max-height.
 			// We want the modal to be as tall as possible also when the content is short.
-			height: 9999rem;
+			&:not(.is-full-screen) {
+				height: 9999rem;
+			}
 
 			.components-modal__header + div {
 				height: 100%;
@@ -397,6 +404,7 @@ div[data-type="core/freeform"] {
 				height: 100%;
 				display: flex;
 				flex-direction: column;
+				min-width: 50vw;
 			}
 
 			.mce-edit-area {
